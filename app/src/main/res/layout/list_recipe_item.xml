@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@android:color/transparent"
+    android:layout_marginLeft="4dp"
+    android:layout_marginRight="4dp"
+    >
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="@dimen/recipe_card_width"
+        android:layout_height="@dimen/recipe_card_height"
+        android:background="@drawable/background_rounded_shadowed"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp">
+
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:id="@+id/recipe_image"
+            android:src="@drawable/icon_cutlery"
+            android:scaleType="centerInside"
+            android:contentDescription="@string/content_descr_recipe_image"
+            android:adjustViewBounds="false"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/name"
+            android:id="@+id/recipe_name"
+            android:gravity="center" />
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_gray"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"/>
+
+        <RatingBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/recipe_rating_bar"
+            android:numStars="5"
+            android:layout_gravity="center_horizontal"
+            style="@android:style/Widget.DeviceDefault.Light.RatingBar.Small"
+            android:layout_marginBottom="5dp"
+            android:stepSize="0.5"
+            android:isIndicator="true" />
+
+    </LinearLayout>
+
+</RelativeLayout>

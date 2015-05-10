@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/descr_cam_edit"
+        android:title="@string/edit"
+        android:icon="@drawable/icon_edit_orange"
+        android:showAsAction="ifRoom">
+    </item>
+    <item
+        android:id="@+id/descr_cam_delete"
+        android:title="@string/delete"
+        android:icon="@drawable/icon_minus_orange"
+        android:showAsAction="ifRoom">
+    </item>
+    <item
+        android:id="@+id/descr_cam_up"
+        android:title="@string/up"
+        android:icon="@drawable/icon_up_orange"
+        android:showAsAction="always">
+    </item>
+    <item
+        android:id="@+id/descr_cam_down"
+        android:title="@string/down"
+        android:icon="@drawable/icon_down_orange"
+        android:showAsAction="always">
+    </item>
+</menu>

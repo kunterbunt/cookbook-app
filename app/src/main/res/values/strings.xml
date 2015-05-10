@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Cookbook</string>\
+    <string name="app_name_cap">COOKBOOK</string>
+    <string name="action_settings">Settings</string>
+    <string name="add_recipe">Add a recipe</string>
+    <string name="start_cooking">Start cooking</string>
+    <string name="settings">Settings</string>
+    <string name="cook_from_what_i_have">Cook from what I have at home</string>
+    <string name="browse">Browse Cookbook</string>
+    <string name="hint_name">Enter name…</string>
+    <string name="hint_description">Enter description…</string>
+    <string name="hint_step_description">What should be done now?</string>
+    <string name="tap_to_add_picture">Tap here to add a picture</string>
+    <string name="choose_picture_or_take">Would you like to take a picture or choose from your gallery?</string>
+    <string name="take_picture">Camera</string>
+    <string name="choose_from_gallery">Gallery</string>
+    <string name="step">Step</string>
+    <string name="description">Description</string>
+    <string name="okay">Okay</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit">Edit</string>
+    <string name="add">Add</string>
+    <string name="delete">Delete</string>
+    <string name="clear">Clear</string>
+    <string name="change">Change</string>
+    <string name="remove">Remove</string>
+    <string name="up">Up</string>
+    <string name="down">Down</string>
+    <string name="title_activity_edit_recipe">Add recipe…</string>
+    <string name="basics">Basics</string>
+    <string name="preparation">Preparation</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="preparation_time">Preparation time</string>
+    <string name="difficulty">Difficulty</string>
+    <string name="hint_add_steps">Start by adding a preparation step.</string>
+    <string name="hint_ingredient_unit">Enter amount…</string>
+    <string name="hint_ingredient">Ingredient…</string>
+    <string name="hint_add_ingredients">Start by adding an ingredient..</string>
+    <string name="hint_add_category">Category name…</string>
+    <string name="title">Title</string>
+    <string name="hint">Hint</string>
+    <string name="title_activity_index">My Cookbook</string>
+    <string name="title_activity_find_recipe">Find recipe for what I have</string>
+    <string name="section_browse">Browse</string>
+    <string name="section_find">Find</string>
+    <string name="section_settings">Settings</string>
+    <string name="action_example">Example action</string>
+    <string name="shared_preferences_file">com.kunterbunt.cookbook.shared_preferences</string>
+    <string name="categories_file">com.kunterbunt.cookbook.shared_preferences_categories</string>
+    <string name="reset_database">Reset database</string>
+    <string name="delete_category">Remove category</string>
+    <string name="choose_categories">Which categories fit?</string>
+    <string name="uncategorized">Uncategorized</string>
+    <string name="no">No</string>
+    <string name="cannot_delete_must_have_category">Can\'t delete this category, sorry.</string>
+    <string name="confirm_deletion_title">Confirm deletion</string>
+    <string name="confirm_deletion_message">Really delete </string>
+
+    <string-array name="preparation_time_choices">
+        <item>5min</item>
+        <item>10min</item>
+        <item>15min</item>
+        <item>30min</item>
+        <item>45min</item>
+        <item>1h</item>
+        <item>>1h</item>
+    </string-array>
+    <string-array name="difficulty_choices">
+        <item>Easy</item>
+        <item>Moderate</item>
+        <item>Challenging</item>
+    </string-array>
+    <string-array name="difficulty_choices_description">
+        <item>Requires common ingredients and little to basic cooking skills.</item>
+        <item>A little more preparation time and experience is required.</item>
+        <item>There\'s something special about this recipe.</item>
+    </string-array>
+    <string-array name="units">
+        <item>g</item>
+        <item>kg</item>
+        <item>ml</item>
+        <item>l</item>
+        <item>quarter</item>
+        <item>half</item>
+        <item>whole</item>
+        <item>tsp.</item>
+        <item>tbsp.</item>
+        <item>cups</item>
+        <item>pinch</item>
+    </string-array>
+    <string-array name="default_categories">
+        <item>Breakfast</item>
+        <item>Lunch</item>
+        <item>Dinner</item>
+    </string-array>
+    <string-array name="must_have_categories">
+        <item>Sponsored</item>
+    </string-array>
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="name">Name</string>
+    <string name="no_recipes_yet">No recipes found.</string>
+    <string name="content_descr_recipe_image">Recipe Image</string>
+    <string name="title_activity_show_recipe">ShowRecipeActivity</string>
+    <string name="title_activity_settings">Settings</string>
+
+</resources>

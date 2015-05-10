@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.kunterbunt.cookbook.activities.BrowseActivity.CategoryFragment"
+    android:clickable="false">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/no_recipes_yet"
+        android:id="@+id/category_no_recipes_text"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/category_recipe_list"
+        android:divider="@null"
+        android:dividerHeight="0dp" />
+
+    <ImageButton
+        style="@style/FAB.Final"
+        android:onClick="onNewRecipeButton" />
+</RelativeLayout>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/ingredients_list"
+        android:dividerHeight="1pt"
+        android:divider="@null"
+        android:paddingTop="6pt" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/hint_add_ingredients"
+        android:id="@+id/add_ingredients_hint"
+        android:gravity="center"
+        android:textColor="@color/dark_gray"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <ImageButton
+        style="@style/FAB.Final"
+        android:onClick="onAddIngredientButton"/>
+</RelativeLayout>

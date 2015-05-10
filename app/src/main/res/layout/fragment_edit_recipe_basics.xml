@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:id="@+id/basics_name_txt"
+        android:layout_centerHorizontal="true"
+        android:hint="@string/hint_name"
+        android:gravity="center"
+        android:background="@color/app_color_accent"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:inputType="text|textCapWords"
+        android:layout_alignParentTop="true"
+        android:textColor="@color/white"
+        android:textColorHint="@color/gray" />
+
+    <ImageButton
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:id="@+id/basics_choose_img_btn"
+        android:src="@drawable/icon_picture"
+        android:background="@drawable/button_transparent"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="onChooseImage"
+        android:layout_weight="0.4"
+        android:scaleType="center" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/preparation_time"
+            android:id="@+id/basics_prep_time_txt"
+            android:gravity="center"
+            android:layout_alignParentTop="true"
+            android:layout_alignBottom="@+id/basics_prep_time_spinner"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_weight="0.6" />
+
+        <Spinner
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/basics_prep_time_spinner"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:spinnerMode="dropdown"
+            android:layout_weight="0.4" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.1" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/difficulty"
+            android:id="@+id/bascis_difficulty_txt"
+            android:gravity="center"
+            android:layout_below="@+id/basics_prep_time_txt"
+            android:layout_alignRight="@+id/basics_prep_time_txt"
+            android:layout_alignEnd="@+id/basics_prep_time_txt"
+            android:layout_alignBottom="@+id/basics_difficulty_spinner"
+            android:layout_alignLeft="@+id/basics_prep_time_txt"
+            android:layout_alignStart="@+id/basics_prep_time_txt"
+            android:layout_weight="0.6" />
+
+        <Spinner
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/basics_difficulty_spinner"
+            android:layout_below="@+id/basics_prep_time_txt"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:spinnerMode="dropdown"
+            android:layout_alignLeft="@+id/basics_prep_time_spinner"
+            android:layout_alignStart="@+id/basics_prep_time_spinner"
+            android:layout_weight="0.4" />
+    </LinearLayout>
+
+    <RatingBar
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:id="@+id/basics_rating_bar"
+        android:numStars="5"
+        android:rating="2.5"
+        android:stepSize="0.5"
+        android:layout_below="@+id/bascis_difficulty_txt"
+        android:layout_centerHorizontal="true"
+        android:layout_weight="0.1"
+        android:layout_gravity="center" />
+
+</LinearLayout>
