@@ -60,6 +60,7 @@
     <string name="cannot_delete_must_have_category">Can\'t delete this category, sorry.</string>
     <string name="confirm_deletion_title">Confirm deletion</string>
     <string name="confirm_deletion_message">Really delete </string>
+    <string name="text">Some text that should be overwritten</string>
 
     <string-array name="preparation_time_choices">
         <item>5min</item>

@@ -100,7 +100,6 @@ public class DrawerBaseActivity extends ActionBarActivity {
         mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int pos, long arg3) {
-                mDrawerAdapter.setSelectedItem(pos);
                 mDrawerAdapter.notifyDataSetChanged();
                 showProgressScreen();
                 // Find.

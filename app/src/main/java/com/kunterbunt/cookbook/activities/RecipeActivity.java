@@ -23,7 +23,6 @@ import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +39,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kunterbunt.cookbook.R;
-import com.kunterbunt.cookbook.adapters.IngredientsListAdapter;
+import com.kunterbunt.cookbook.adapters.AbstractAdapter;
 import com.kunterbunt.cookbook.data.Category;
 import com.kunterbunt.cookbook.data.DatabaseHelper;
 import com.kunterbunt.cookbook.data.Ingredient;
@@ -55,11 +54,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import it.gmariotti.cardslib.library.internal.Card;
-import it.gmariotti.cardslib.library.internal.CardArrayAdapter;
-import it.gmariotti.cardslib.library.internal.CardHeader;
-import it.gmariotti.cardslib.library.view.CardListView;
-
 public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabListener {
 
     public static final String LOG_TAG = "RecipeActivity";
@@ -69,16 +63,23 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
     ViewPager mViewPager;
 
     public static final String ARG_CATEGORY = "ARG_CAT";
-    private int mPreparationCardsCounter;
+
     private ActionMode mActionMode;
-    private CardArrayAdapter mPreparationCardsAdapter;
-    private List<Card> mPreparationCardsList;
-    private Card mSelectedCard;
-    private View mSelectedCardView;
+
+    /** Holds all current preparation steps. */
+    private List<String> mPreparationList;
+    /** Preparation step list adapter. */
+    private AbstractAdapter<String> mPreparationAdapter;
+
     public static final int REQUEST_IMAGE_CAPTURE = 1234, SELECT_PHOTO = 1235;
+    /** Current image path. */
     private String mCurrentImagePath;
+    /** Current image. */
     private Bitmap currentImage;
+    /** Holds all current ingrdients. */
     private List<Ingredient> mIngredientsList;
+    /** Ingredient list adapter. */
+    private AbstractAdapter mIngredientsListAdapter;
 
     private int difficulty = 0, preparationTime = 0;
     private float rating = 0;
@@ -95,7 +96,6 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
         View activityView = inflater.inflate(R.layout.activity_edit_recipe, null, false);
         frameLayout.addView(activityView);
 
-        mPreparationCardsCounter = 0;
         int preselectedCategory = getIntent().getIntExtra(ARG_CATEGORY, -1);
         if (preselectedCategory == -1)
             chosenCategories = null;
@@ -104,29 +104,44 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
             chosenCategories[preselectedCategory] = true;
         }
 
-
-        // Set up the cards. The mPreparationCardsAdapter still needs to be passed to the actual view, so we make it available through a getter.
-        mPreparationCardsList = new ArrayList<Card>();
-        mPreparationCardsAdapter = new CardArrayAdapter(this, mPreparationCardsList);
+        // Set up preparation step list.
+        mPreparationList = new ArrayList<String>();
+        mPreparationAdapter = new AbstractAdapter<String>(getApplicationContext(), R.layout.list_preparation_item, mPreparationList) {
+            @Override
+            protected void populateFields(View view, int position) {
+                TextView titleField = (TextView) view.findViewById(R.id.preparation_title);
+                titleField.setText(getContext().getString(R.string.step) + " " + (position + 1));
+                TextView bodyField = (TextView) view.findViewById(R.id.preparation_body);
+                bodyField.setText((String) getItem(position));
+            }
+        };
 
         // Set up the ingredients list.
         mIngredientsList = new ArrayList<Ingredient>();
-        mIngredientsListAdapter = new IngredientsListAdapter(this, R.layout.list_ingredient_item, mIngredientsList);
-
-        // Create the mPreparationCardsAdapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
+        mIngredientsListAdapter = new AbstractAdapter(getApplicationContext(), R.layout.list_ingredient_item, mIngredientsList) {
+            @Override
+            protected void populateFields(View view, int position) {
+                Ingredient ingredient = (Ingredient) getItem(position);
+                TextView amountField = (TextView) view.findViewById(R.id.ingredient_amount);
+                amountField.setText("" + Tools.format(ingredient.getAmount()) + " " + context.getResources().getStringArray(R.array.units)[ingredient.getUnit()]);
+                TextView nameField = (TextView) view.findViewById(R.id.ingredient_name);
+                nameField.setText(ingredient.getName());
+            }
+        };
 
         // Set up the ViewPager with the sections mPreparationCardsAdapter.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
     }
 
-    public IngredientsListAdapter getIngredientsListAdapter() {
+    public AbstractAdapter getIngredientsListAdapter() {
         return mIngredientsListAdapter;
     }
 
-    private IngredientsListAdapter mIngredientsListAdapter;
+    public AbstractAdapter getPreparationListAdapter() {
+        return mPreparationAdapter;
+    }
 
     public String getCurrentImagePath() {
         return  mCurrentImagePath;
@@ -136,12 +151,12 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
         return currentImage;
     }
 
-    public CardArrayAdapter getCardListAdapterDescription() {
-        return mPreparationCardsAdapter;
-    }
+//    public CardArrayAdapter getCardListAdapterDescription() {
+//        return mPreparationCardsAdapter;
+//    }
 
     private void onAddPreparationStep() {
-        // dialog that asks for description step
+        // Build dialog that asks for description step.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         final View inflated = inflater.inflate(R.layout.dialog_text_input, null);
@@ -160,43 +175,15 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String description = descriptionStep.getText().toString();
+                        // Ignore empty descriptions.
                         if (description.equals(""))
                             return;
-                        Card card = new Card(context);
-                        CardHeader header = new CardHeader(context);
-                        header.setTitle("Step " + ++mPreparationCardsCounter);
-                        card.setTitle(description);
-                        card.addCardHeader(header);
-                        card.setBackgroundResourceId(R.drawable.background_orange_selectable);
-
-                        card.setOnClickListener(new Card.OnCardClickListener() {
-                            @Override
-                            public void onClick(Card card, View view) {
-                                if (mActionMode != null)
-                                    mActionMode.finish();
-                            }
-                        });
-
-                        // set up for contextual action mode
-                        card.setOnLongClickListener(new Card.OnLongCardClickListener() {
-                            @Override
-                            public boolean onLongClick(Card card, View view) {
-                                if (mActionMode != null) {
-                                    view.setActivated(false);
-                                    mActionMode.finish();
-                                    return false;
-                                }
-                                mActionMode = startActionMode(mActionModeCallback);
-                                view.setActivated(true);
-                                mSelectedCardView = view;
-                                mSelectedCard = card;
-                                return true;
-                            }
-                        });
-
-                        mPreparationCardsList.add(card);
-                        findViewById(R.id.add_steps_hint).setVisibility(View.INVISIBLE);
-                        mPreparationCardsAdapter.notifyDataSetChanged();
+                        mPreparationList.add(description);
+                        // Hide how-to hint.
+                        if (findViewById(R.id.add_steps_hint).getVisibility() == View.VISIBLE)
+                            findViewById(R.id.add_steps_hint).setVisibility(View.INVISIBLE);
+                        // Notify adapter.
+                        mPreparationAdapter.notifyDataSetChanged();
                     }
                 });
         AlertDialog dialog = builder.create();
@@ -314,7 +301,7 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
             imm.showSoftInput(nameField, InputMethodManager.SHOW_IMPLICIT);
             return;
         }
-        if (mPreparationCardsList.size() == 0) {
+        if (mPreparationList.size() == 0) {
             Toast.makeText(this, "You need at least one preparation step.", Toast.LENGTH_LONG).show();
             mViewPager.setCurrentItem(1);
             onAddPreparationStep();
@@ -327,9 +314,6 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
             return;
         }
         String imagePath = mCurrentImagePath == null ? "none" : mCurrentImagePath;
-        List<String> preparationSteps = new ArrayList<String>();
-        for (Card card : mPreparationCardsList)
-            preparationSteps.add(card.getTitle());
 
         final Recipe recipe = new Recipe();
         recipe.setName(name);
@@ -338,7 +322,7 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
         recipe.setRating(rating);
         recipe.setImagePath(imagePath);
         recipe.setIngredients(mIngredientsList);
-        recipe.setPreparationSteps(preparationSteps);
+        recipe.setPreparationSteps(mPreparationList);
 
         // Ask for categories.
         final List<Category> existingCategories = DatabaseHelper.getInstance().getAllCategories();
@@ -556,126 +540,125 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
 
     }
 
-    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
-        @Override
-        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
-            MenuInflater inflater = actionMode.getMenuInflater();
-            inflater.inflate(R.menu.contextual_action_menu_add_recipe_descr, menu);
-            return true;
-        }
+//    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+//        @Override
+//        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+//            MenuInflater inflater = actionMode.getMenuInflater();
+//            inflater.inflate(R.menu.contextual_action_menu_add_recipe_descr, menu);
+//            return true;
+//        }
+//
+//        @Override
+//        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+//            return false;
+//        }
 
-        @Override
-        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
-            return false;
-        }
+//        @Override
+//        public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+//            switch (menuItem.getItemId()) {
+//                case R.id.descr_cam_delete:
+//                    mPreparationCardsList.remove(mSelectedCard);
+//                    for (int i = 0; i < mPreparationCardsList.size() - 1; i++) {
+//                        Card currentCard = mPreparationCardsList.get(i);
+//                        currentCard.getCardHeader().setTitle("Step " + (i + 1));
+//                    }
+//                    mPreparationCardsAdapter.notifyDataSetChanged();
+//                    mActionMode.finish();
+//                    if (mPreparationCardsList.size() == 0)
+//                        findViewById(R.id.add_steps_hint).setVisibility(View.VISIBLE);
+//                    return true;
+//                case R.id.descr_cam_edit:
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(RecipeActivity.this);
+//                    LayoutInflater inflater = getLayoutInflater();
+//                    final View inflated = inflater.inflate(R.layout.dialog_text_input, null);
+//                    final EditText descriptionStep = (EditText) inflated.findViewById(R.id.dialog_preparation_step_txt);
+//                    descriptionStep.setText(mSelectedCard.getTitle());
+//                    descriptionStep.requestFocus();
+//                    builder.setView(inflated)
+//                            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+//                                @Override
+//                                public void onClick(DialogInterface dialogInterface, int i) {
+//                                    return;
+//                                }
+//                            })
+//                            .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
+//                                @Override
+//                                public void onClick(DialogInterface dialogInterface, int i) {
+//                                    String description = descriptionStep.getText().toString();
+//                                    if (description.equals(""))
+//                                        return;
+//                                    mSelectedCard.setTitle(description);
+//                                    mPreparationCardsAdapter.notifyDataSetChanged();
+//                                }
+//                            });
+//                    AlertDialog dialog = builder.create();
+//                    dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+//                    dialog.show();
+//                    mActionMode.finish();
+//                    return true;
+//                case R.id.descr_cam_up:
+//                    // find current position
+//                    int positionUp = 0;
+//                    for (int i = 0; i < mPreparationCardsList.size(); i++) {
+//                        if (mPreparationCardsList.get(i) == mSelectedCard) {
+//                            positionUp = i;
+//                            break;
+//                        }
+//                    }
+//                    // nothing to do for top card
+//                    if (positionUp == 0)
+//                        return true;
+//                    // re-sort
+//                    Card otherCardUp = mPreparationCardsList.get(positionUp - 1);
+//                    mPreparationCardsList.set(positionUp - 1, mSelectedCard);
+//                    mPreparationCardsList.set(positionUp, otherCardUp);
+//                    // adjust titles
+//                    mSelectedCard.getCardHeader().setTitle("Step " + (positionUp));
+//                    otherCardUp.getCardHeader().setTitle("Step " + (positionUp + 1));
+//                    // adjust highlighting
+//                    mSelectedCardView.setActivated(false);
+//                    mSelectedCardView = otherCardUp.getCardView();
+//                    mSelectedCardView.setActivated(true);
+//                    mPreparationCardsAdapter.notifyDataSetChanged();
+//                    return true;
+//                case R.id.descr_cam_down:
+//                    // find current position
+//                    int positionDown = 0;
+//                    for (int i = 0; i < mPreparationCardsList.size(); i++) {
+//                        if (mPreparationCardsList.get(i) == mSelectedCard) {
+//                            positionDown = i;
+//                            break;
+//                        }
+//                    }
+//                    // nothing to do for bottom card
+//                    if (positionDown == mPreparationCardsList.size() - 1)
+//                        return true;
+//                    // re-sort
+//                    Card otherCardDown = mPreparationCardsList.get(positionDown + 1);
+//                    mPreparationCardsList.set(positionDown + 1, mSelectedCard);
+//                    mPreparationCardsList.set(positionDown, otherCardDown);
+//                    // adjust titles
+//                    mSelectedCard.getCardHeader().setTitle("Step " + (positionDown + 2));
+//                    otherCardDown.getCardHeader().setTitle("Step " + (positionDown + 1));
+//                    // adjust highlighting
+//                    mSelectedCardView.setActivated(false);
+//                    mSelectedCardView = otherCardDown.getCardView();
+//                    mSelectedCardView.setActivated(true);
+//                    mPreparationCardsAdapter.notifyDataSetChanged();
+//                    return true;
+//                default:
+//                    return false;
+//            }
+//        }
 
-        @Override
-        public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
-            switch (menuItem.getItemId()) {
-                case R.id.descr_cam_delete:
-                    mPreparationCardsCounter--;
-                    mPreparationCardsList.remove(mSelectedCard);
-                    for (int i = 0; i < mPreparationCardsList.size() - 1; i++) {
-                        Card currentCard = mPreparationCardsList.get(i);
-                        currentCard.getCardHeader().setTitle("Step " + (i + 1));
-                    }
-                    mPreparationCardsAdapter.notifyDataSetChanged();
-                    mActionMode.finish();
-                    if (mPreparationCardsList.size() == 0)
-                        findViewById(R.id.add_steps_hint).setVisibility(View.VISIBLE);
-                    return true;
-                case R.id.descr_cam_edit:
-                    AlertDialog.Builder builder = new AlertDialog.Builder(RecipeActivity.this);
-                    LayoutInflater inflater = getLayoutInflater();
-                    final View inflated = inflater.inflate(R.layout.dialog_text_input, null);
-                    final EditText descriptionStep = (EditText) inflated.findViewById(R.id.dialog_preparation_step_txt);
-                    descriptionStep.setText(mSelectedCard.getTitle());
-                    descriptionStep.requestFocus();
-                    builder.setView(inflated)
-                            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    return;
-                                }
-                            })
-                            .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    String description = descriptionStep.getText().toString();
-                                    if (description.equals(""))
-                                        return;
-                                    mSelectedCard.setTitle(description);
-                                    mPreparationCardsAdapter.notifyDataSetChanged();
-                                }
-                            });
-                    AlertDialog dialog = builder.create();
-                    dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-                    dialog.show();
-                    mActionMode.finish();
-                    return true;
-                case R.id.descr_cam_up:
-                    // find current position
-                    int positionUp = 0;
-                    for (int i = 0; i < mPreparationCardsList.size(); i++) {
-                        if (mPreparationCardsList.get(i) == mSelectedCard) {
-                            positionUp = i;
-                            break;
-                        }
-                    }
-                    // nothing to do for top card
-                    if (positionUp == 0)
-                        return true;
-                    // re-sort
-                    Card otherCardUp = mPreparationCardsList.get(positionUp - 1);
-                    mPreparationCardsList.set(positionUp - 1, mSelectedCard);
-                    mPreparationCardsList.set(positionUp, otherCardUp);
-                    // adjust titles
-                    mSelectedCard.getCardHeader().setTitle("Step " + (positionUp));
-                    otherCardUp.getCardHeader().setTitle("Step " + (positionUp + 1));
-                    // adjust highlighting
-                    mSelectedCardView.setActivated(false);
-                    mSelectedCardView = otherCardUp.getCardView();
-                    mSelectedCardView.setActivated(true);
-                    mPreparationCardsAdapter.notifyDataSetChanged();
-                    return true;
-                case R.id.descr_cam_down:
-                    // find current position
-                    int positionDown = 0;
-                    for (int i = 0; i < mPreparationCardsList.size(); i++) {
-                        if (mPreparationCardsList.get(i) == mSelectedCard) {
-                            positionDown = i;
-                            break;
-                        }
-                    }
-                    // nothing to do for bottom card
-                    if (positionDown == mPreparationCardsList.size() - 1)
-                        return true;
-                    // re-sort
-                    Card otherCardDown = mPreparationCardsList.get(positionDown + 1);
-                    mPreparationCardsList.set(positionDown + 1, mSelectedCard);
-                    mPreparationCardsList.set(positionDown, otherCardDown);
-                    // adjust titles
-                    mSelectedCard.getCardHeader().setTitle("Step " + (positionDown + 2));
-                    otherCardDown.getCardHeader().setTitle("Step " + (positionDown + 1));
-                    // adjust highlighting
-                    mSelectedCardView.setActivated(false);
-                    mSelectedCardView = otherCardDown.getCardView();
-                    mSelectedCardView.setActivated(true);
-                    mPreparationCardsAdapter.notifyDataSetChanged();
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode actionMode) {
-            mActionMode = null;
-            if (mSelectedCardView != null) {
-                mSelectedCardView.setActivated(false);
-            }
-        }
-    };
+//        @Override
+//        public void onDestroyActionMode(ActionMode actionMode) {
+//            mActionMode = null;
+//            if (mSelectedCardView != null) {
+//                mSelectedCardView.setActivated(false);
+//            }
+//        }
+//    };
 
     public void setDifficulty(int difficulty) {
         this.difficulty = difficulty;
@@ -827,22 +810,19 @@ public class RecipeActivity extends DrawerBaseActivity implements ActionBar.TabL
 
     public static class PreparationFragment extends Fragment {
 
-        private CardListView mListViewDescription;
-
-        public PreparationFragment() {}
+        private ListView mPreparationList;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_edit_recipe_preparation, container, false);
-            mListViewDescription = (CardListView) rootView.findViewById(R.id.add_recipe_steps_list);
-
+            mPreparationList = (ListView) rootView.findViewById(R.id.preparation_list);
             return rootView;
         }
 
         @Override
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
-            mListViewDescription.setAdapter(((RecipeActivity) getActivity()).getCardListAdapterDescription());
+            mPreparationList.setAdapter(((RecipeActivity) getActivity()).getPreparationListAdapter());
         }
     }
 

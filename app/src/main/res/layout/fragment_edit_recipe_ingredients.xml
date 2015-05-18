@@ -7,9 +7,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/ingredients_list"
-        android:dividerHeight="1pt"
-        android:divider="@null"
-        android:paddingTop="6pt" />
+        android:divider="@android:color/transparent"
+        android:dividerHeight="2dp"
+        android:paddingTop="10dp" />
 
     <TextView
         android:layout_width="fill_parent"

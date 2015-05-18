@@ -138,15 +138,9 @@ public class BrowseActivity extends DrawerBaseActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             categoryToDelete = mSectionsPagerAdapter.categories.indexOf(mCurrentCategory);
                             DatabaseHelper.getInstance().removeCategory(mCurrentCategory);
-                            // Move to next category if there is one, to the first otherwise.
-                            int currentPosition = mViewPager.getCurrentItem();
-                            int numberOfCategories = mSectionsPagerAdapter.getCount();
-                            int positionToScrollTo = currentPosition < numberOfCategories - 1 ? currentPosition + 1 : 0;
-                            // Work-around for jumping forward two categories bug.
-                            if (positionToScrollTo > currentPosition)
-                                jumpOneBack = true;
-                            mViewPager.setCurrentItem(positionToScrollTo);
-                            mCurrentCategory = mSectionsPagerAdapter.categories.get(positionToScrollTo);
+                            // Restart activity.
+                            finish();
+                            startActivity(new Intent(getApplicationContext(), BrowseActivity.class));
                         }
                     })
                     .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
