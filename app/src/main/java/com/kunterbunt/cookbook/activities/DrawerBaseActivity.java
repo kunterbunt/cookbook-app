@@ -3,6 +3,7 @@ package com.kunterbunt.cookbook.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
@@ -17,10 +18,11 @@ import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kunterbunt.cookbook.R;
-import com.kunterbunt.cookbook.adapters.NavigationDrawerAdapter;
+import com.kunterbunt.cookbook.adapters.AbstractAdapter;
 import com.kunterbunt.cookbook.tools.Tools;
 
 /**
@@ -31,7 +33,7 @@ public class DrawerBaseActivity extends ActionBarActivity {
     public DrawerLayout mDrawerLayout;
     public ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
-    private NavigationDrawerAdapter mDrawerAdapter;
+    private AbstractAdapter mDrawerAdapter;
 
     private boolean mShouldChangeActivity = false, mIsDrawerOpen = false;
 
@@ -94,7 +96,19 @@ public class DrawerBaseActivity extends ActionBarActivity {
         final String section_settings = getString(R.string.section_settings);
         String[] sections = new String[]{section_browse, section_find, section_settings};
 
-        mDrawerAdapter = new NavigationDrawerAdapter(this, R.layout.list_drawer_item, sections);
+        mDrawerAdapter = new AbstractAdapter(this, R.layout.list_drawer_item, sections) {
+            @Override
+            protected void populateFields(View view, int position) {
+                TextView title = (TextView) view.findViewById(R.id.drawer_list_item_title);
+                title.setText((String) getItem(position));
+                int mSelectedItem = Tools.getPref(Tools.PREFS_CURRENT_ACITIVTY, 0, getContext());
+                if (position == mSelectedItem) {
+                    title.setTextColor(getContext().getResources().getColor(R.color.app_color));
+                    title.setTypeface(Typeface.DEFAULT_BOLD);
+                } else
+                    title.setTextColor(getContext().getResources().getColor(R.color.white));
+            }
+        };
         mDrawerList.setAdapter(mDrawerAdapter);
 
         mDrawerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {

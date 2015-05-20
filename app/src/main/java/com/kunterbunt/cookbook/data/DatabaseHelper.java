@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 6;
+    public static final int DATABASE_VERSION = 7;
     public static final String DATABASE_NAME = "cookbook-recipes.db";
     public static final String LOG_TAG = "DatabaseHelper";
     public static DatabaseHelper instance = null;
@@ -87,8 +87,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Recipe> recipes = new ArrayList<>();
         Cursor cursor = readableDatabase.query(
                 Contract.Recipe2CategoryEntry.TABLE_NAME,
-                new String[]{Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE},
-                Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + "=?", new String[]{String.valueOf(categoryId)}, null, null, null);
+                new String[]{Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE, Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION},
+                Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + "=?", new String[]{String.valueOf(categoryId)}, null, null, Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION);
         while (cursor.moveToNext()) {
             long _id = cursor.getLong(cursor.getColumnIndexOrThrow(Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE));
             recipes.add(getRecipe(_id));
@@ -118,7 +118,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Categories.
         cursor = readableDatabase.query(
             Contract.Recipe2CategoryEntry.TABLE_NAME,
-            new String[]{Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY},
+            new String[]{Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY, Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION},
             Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE + "=?", new String[]{String.valueOf(_id)}, null, null, null);
         List<Category> categories = new ArrayList<>();
         while (cursor.moveToNext()) {
@@ -131,6 +131,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String name = categoryCursor.getString(categoryCursor.getColumnIndexOrThrow(Contract.CategoryEntry.COLUMN_NAME_TITLE));
             categoryCursor.close();
             categories.add(new Category(name, categoryId));
+            recipe.setListPosition(cursor.getColumnIndexOrThrow(Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION));
         }
         cursor.close();
         recipe.setCategories(categories);
@@ -317,6 +318,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Insert into linker table.
             values.put(Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY, categoryId);
             values.put(Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE, _id);
+            values.put(Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION, recipe.getListPosition());
             if (writableDatabase.insert(Contract.Recipe2CategoryEntry.TABLE_NAME, null, values) == -1)
                 Log.e(LOG_TAG, "ID is -1 after inserting into " + Contract.Recipe2CategoryEntry.TABLE_NAME);
             values.clear();
@@ -360,6 +362,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         Log.i(LOG_TAG, "Added recipe: " + recipe.getName() + " (" + recipe.getPreparationSteps().size() + " preparation steps)");
         return _id;
+    }
+
+    /**
+     * Set list positions of the given recipes in the linker table to the given category so that looking them up orders them in the future.
+     * @param recipeIds Recipe IDs.
+     * @param categoryId Category ID.
+     * @param positions Recipe ordering.
+     */
+    public void orderRecipes(long[] recipeIds, long categoryId, int[] positions) {
+        assert recipeIds.length == positions.length;
+        for (int i = 0; i < recipeIds.length; i++) {
+            ContentValues values = new ContentValues();
+            values.put(Contract.Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION, positions[i]);
+            writableDatabase.update(Contract.Recipe2CategoryEntry.TABLE_NAME,
+                    values,
+                    Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + "=?" + " AND " + Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE + "=?",
+                    new String[]{"" + categoryId, "" + recipeIds[i]});
+        }
     }
 
     private DatabaseHelper(Context context) {
@@ -457,7 +477,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         private static final String DEFAULT = " DEFAULT ";
         private static final String NOT_NULL = " NOT NULL ";
 
-        private Contract() {};
+        private Contract() {}
 
         protected static abstract class RecipeEntry implements BaseColumns {
             public static final String TABLE_NAME = "recipes";
@@ -569,12 +589,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             public static final String TABLE_NAME = "recipe2category";
             public static final String COLUMN_NAME_RECIPE = "recipe";
             public static final String COLUMN_NAME_CATEGORY = "category";
+            public static final String COLUMN_NAME_LIST_POSITION = "position";
         }
         protected static final String SQL_CREATE_TABLE_RECIPE2CATEGORY =
                 "CREATE TABLE " + Recipe2CategoryEntry.TABLE_NAME + " (" +
                         Recipe2CategoryEntry._ID + " INTEGER PRIMARY KEY," +
                         Recipe2CategoryEntry.COLUMN_NAME_RECIPE + TYPE_INTEGER + COMMA_SEP +
                         Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + TYPE_INTEGER + COMMA_SEP +
+                        Recipe2CategoryEntry.COLUMN_NAME_LIST_POSITION + TYPE_INTEGER + COMMA_SEP +
                         "FOREIGN KEY (" + Recipe2CategoryEntry.COLUMN_NAME_RECIPE + ") REFERENCES " + RecipeEntry.TABLE_NAME + "(" + RecipeEntry._ID + ")" + COMMA_SEP +
                         "FOREIGN KEY (" + Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + ") REFERENCES " + CategoryEntry.TABLE_NAME + "(" + CategoryEntry._ID + ")" +
                         " )";

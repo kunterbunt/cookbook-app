@@ -23,7 +23,9 @@ public class Recipe implements Parcelable {
     private List<String> preparationSteps;
     private List<Ingredient> ingredients;
     private List<Category> categories;
-    private int preparationTime, difficulty;
+    private int preparationTime;
+    private int difficulty;
+    private int listPosition;
     private float rating;
     private long dateCreated;
     private long _id;
@@ -37,6 +39,7 @@ public class Recipe implements Parcelable {
         preparationTime = -1;
         difficulty = -1;
         rating = -1;
+        listPosition = -1;
         dateCreated = new Date().getTime();
         _id = NOT_SAVED;
     }
@@ -168,6 +171,14 @@ public class Recipe implements Parcelable {
 
     public void setIngredients(List<Ingredient> ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public int getListPosition() {
+        return listPosition;
+    }
+
+    public void setListPosition(int listPosition) {
+        this.listPosition = listPosition;
     }
 
     public List<Category> getCategories() {
