@@ -297,11 +297,9 @@ public class BrowseActivity extends DrawerBaseActivity {
                             View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
                             view.startDrag(data, shadowBuilder, view, 0);
                             // Highlight dragged view.
-                            view.setBackgroundColor(getResources().getColor(R.color.app_color_accent));
-                            view.invalidate();
+                            view.setAlpha(0.5f);
                             // Remember position where it was.
                             mDragFrom = position;
-                            mViewBeingDragged = view;
                             // Reset target position.
                             mDragTo = -1;
                             mDragStarted = true;
@@ -316,25 +314,23 @@ public class BrowseActivity extends DrawerBaseActivity {
                             if (mDragStarted) {
                                 switch (dragEvent.getAction()) {
                                     case DragEvent.ACTION_DRAG_STARTED:
-                                        break;
+                                        return true;
                                     case DragEvent.ACTION_DRAG_ENTERED:
                                         // Remember target position.
                                         mDragTo = position;
                                         // Highlight target.
-                                        if (view != mViewBeingDragged) {
+                                        if (position != mDragFrom)
                                             view.setBackgroundColor(getActivity().getResources().getColor(R.color.app_color));
-                                            view.invalidate();
-                                        }
+                                        else
+                                            view.setAlpha(0.5f);
                                         return true;
                                     case DragEvent.ACTION_DRAG_EXITED:
                                         // Reset target position.
                                         mDragTo = -1;
                                         // Reset highlighting.
-                                        if (view != mViewBeingDragged) {
+                                        if (position != mDragFrom)
                                             view.setBackgroundColor(Color.TRANSPARENT);
-                                            view.invalidate();
-                                        }
-                                        break;
+                                        return true;
                                     case DragEvent.ACTION_DRAG_ENDED:
                                         // Reset all highlighting.
                                         view.setBackgroundColor(Color.TRANSPARENT);
@@ -358,7 +354,7 @@ public class BrowseActivity extends DrawerBaseActivity {
                                         }
                                         // Re-draw list.
                                         mRecipeListAdapter.notifyDataSetChanged();
-                                        break;
+                                        return true;
                                     case DragEvent.ACTION_DRAG_LOCATION:
                                         // y-coord of touch event inside the touched view (so between 0 and view.getBottom())
                                         float y = dragEvent.getY();
@@ -372,12 +368,12 @@ public class BrowseActivity extends DrawerBaseActivity {
 
                                         // actual touch position on screen > bottom with 200px margin
                                         if (y + viewTop > listBottom - 200) {
-                                            mRecipeListView.smoothScrollBy(100, 25);
+                                            mRecipeListView.smoothScrollBy(50, 25);
                                             View child = mRecipeListView.getChildAt(mRecipeListView.getChildCount() - 1);
                                             child.setVisibility(View.GONE);
                                             child.setVisibility(View.VISIBLE);
                                         } else if (y + viewTop < listTop + 200) {
-                                            mRecipeListView.smoothScrollBy(-100, 25);
+                                            mRecipeListView.smoothScrollBy(-50, 25);
                                             View child = mRecipeListView.getChildAt(0);
                                             child.setVisibility(View.GONE);
                                             child.setVisibility(View.VISIBLE);
@@ -399,10 +395,9 @@ public class BrowseActivity extends DrawerBaseActivity {
 
 
         /** Keep track of from where to where the user drags recipe cards. */
-        private int mDragFrom, mDragTo;
+        private int mDragFrom = -1, mDragTo = -1;
         /** To discard drag events not started by the user. */
         private boolean mDragStarted = false;
-        private View mViewBeingDragged = null;
 
     }
 
