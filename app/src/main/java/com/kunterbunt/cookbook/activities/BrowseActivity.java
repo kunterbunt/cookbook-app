@@ -256,6 +256,7 @@ public class BrowseActivity extends DrawerBaseActivity {
         @Override
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
+
             // Set the list view adapter.
             mRecipeListAdapter = new AbstractAdapter<Recipe>(getActivity(), R.layout.list_recipe_item, mRecipeList) {
 
@@ -295,14 +296,14 @@ public class BrowseActivity extends DrawerBaseActivity {
                             // Drag shadow that is displayed during drag.
                             View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
                             view.startDrag(data, shadowBuilder, view, 0);
-                            // Hide view being dragged.
-                            view.setVisibility(View.INVISIBLE);
+                            // Highlight dragged view.
+                            view.setBackgroundColor(getResources().getColor(R.color.app_color_accent));
+                            view.invalidate();
                             // Remember position where it was.
                             mDragFrom = position;
                             mViewBeingDragged = view;
                             // Reset target position.
                             mDragTo = -1;
-                            // Work-around for many drag events being fired.
                             mDragStarted = true;
                             return true;
                         }
@@ -314,18 +315,25 @@ public class BrowseActivity extends DrawerBaseActivity {
                             // Work-around for many drag events being fired.
                             if (mDragStarted) {
                                 switch (dragEvent.getAction()) {
+                                    case DragEvent.ACTION_DRAG_STARTED:
+                                        break;
                                     case DragEvent.ACTION_DRAG_ENTERED:
                                         // Remember target position.
                                         mDragTo = position;
                                         // Highlight target.
-                                        view.setBackgroundColor(getActivity().getResources().getColor(R.color.app_color));
-                                        view.invalidate();
+                                        if (view != mViewBeingDragged) {
+                                            view.setBackgroundColor(getActivity().getResources().getColor(R.color.app_color));
+                                            view.invalidate();
+                                        }
                                         return true;
                                     case DragEvent.ACTION_DRAG_EXITED:
                                         // Reset target position.
                                         mDragTo = -1;
                                         // Reset highlighting.
-                                        view.setBackgroundColor(Color.TRANSPARENT);
+                                        if (view != mViewBeingDragged) {
+                                            view.setBackgroundColor(Color.TRANSPARENT);
+                                            view.invalidate();
+                                        }
                                         break;
                                     case DragEvent.ACTION_DRAG_ENDED:
                                         // Reset all highlighting.
@@ -365,20 +373,14 @@ public class BrowseActivity extends DrawerBaseActivity {
                                         // actual touch position on screen > bottom with 200px margin
                                         if (y + viewTop > listBottom - 200) {
                                             mRecipeListView.smoothScrollBy(100, 25);
-                                            for (int i = 0; i < mRecipeListView.getChildCount(); i++) {
-                                                mRecipeListView.getChildAt(i).setVisibility(View.GONE);
-                                                mRecipeListView.getChildAt(i).setVisibility(View.VISIBLE);
-                                            }
-                                            mViewBeingDragged.setVisibility(View.INVISIBLE);
+                                            View child = mRecipeListView.getChildAt(mRecipeListView.getChildCount() - 1);
+                                            child.setVisibility(View.GONE);
+                                            child.setVisibility(View.VISIBLE);
                                         } else if (y + viewTop < listTop + 200) {
                                             mRecipeListView.smoothScrollBy(-100, 25);
-                                            for (int i = 0; i < mRecipeListView.getChildCount(); i++) {
-                                                if (mRecipeListView.getChildAt(i) != mViewBeingDragged) {
-                                                    mRecipeListView.getChildAt(i).setVisibility(View.GONE);
-                                                    mRecipeListView.getChildAt(i).setVisibility(View.VISIBLE);
-                                                }
-                                            }
-                                            mViewBeingDragged.setVisibility(View.INVISIBLE);
+                                            View child = mRecipeListView.getChildAt(0);
+                                            child.setVisibility(View.GONE);
+                                            child.setVisibility(View.VISIBLE);
                                         }
                                         return true;
                                     default:

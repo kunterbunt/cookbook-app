@@ -39,7 +39,7 @@ public class Recipe implements Parcelable {
         preparationTime = -1;
         difficulty = -1;
         rating = -1;
-        listPosition = -1;
+        listPosition = 0;
         dateCreated = new Date().getTime();
         _id = NOT_SAVED;
     }

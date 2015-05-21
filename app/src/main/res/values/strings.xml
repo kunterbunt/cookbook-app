@@ -107,7 +107,7 @@
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
     <string name="name">Name</string>
-    <string name="no_recipes_yet">No recipes found.</string>
+    <string name="no_recipes_yet">No recipes in this category.</string>
     <string name="content_descr_recipe_image">Recipe Image</string>
     <string name="title_activity_show_recipe">ShowRecipeActivity</string>
     <string name="title_activity_settings">Settings</string>
