@@ -380,6 +380,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Contract.Recipe2CategoryEntry.COLUMN_NAME_CATEGORY + "=?" + " AND " + Contract.Recipe2CategoryEntry.COLUMN_NAME_RECIPE + "=?",
                     new String[]{"" + categoryId, "" + recipeIds[i]});
         }
+        Log.d(LOG_TAG, "Re-ordered recipes.");
     }
 
     private DatabaseHelper(Context context) {

@@ -3,27 +3,42 @@ package com.kunterbunt.cookbook.activities;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
+import android.view.Display;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RatingBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.kunterbunt.cookbook.R;
-import com.kunterbunt.cookbook.adapters.RecipeListAdapter;
+import com.kunterbunt.cookbook.adapters.AbstractAdapter;
 import com.kunterbunt.cookbook.data.Category;
 import com.kunterbunt.cookbook.data.DatabaseHelper;
 import com.kunterbunt.cookbook.data.Recipe;
 import com.kunterbunt.cookbook.tools.Tools;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.List;
 import java.util.Locale;
@@ -201,7 +216,7 @@ public class BrowseActivity extends DrawerBaseActivity {
     public static class CategoryFragment extends Fragment {
 
         private Category mCategory;
-        private RecipeListAdapter mRecipeListAdapter;
+        private AbstractAdapter mRecipeListAdapter;
         private ListView mRecipeListView;
         private List<Recipe> mRecipeList;
 
@@ -242,9 +257,150 @@ public class BrowseActivity extends DrawerBaseActivity {
         public void onActivityCreated(Bundle savedInstanceState) {
             super.onActivityCreated(savedInstanceState);
             // Set the list view adapter.
-            mRecipeListAdapter = new RecipeListAdapter(getActivity(), R.layout.list_recipe_item, mRecipeList);
+            mRecipeListAdapter = new AbstractAdapter<Recipe>(getActivity(), R.layout.list_recipe_item, mRecipeList) {
+
+                @Override
+                protected void populateFields(View view, final int position) {
+                    // Get recipe from list.
+                    Recipe recipe = (Recipe) getItem(position);
+                    // Populate fields.
+                    ImageView imageView = (ImageView) view.findViewById(R.id.recipe_image);
+                    if (!recipe.getImagePath().equals(Recipe.NO_IMAGE)) {
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        ImageLoader.getInstance().displayImage("file://" + recipe.getImagePath(), imageView);
+                    } else {
+                        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                        imageView.setImageDrawable(getContext().getResources().getDrawable(R.drawable.icon_cutlery));
+                    }
+
+                    ((TextView) view.findViewById(R.id.recipe_name)).setText(recipe.getName());
+                    RatingBar ratingBar = (RatingBar) view.findViewById(R.id.recipe_rating_bar);
+                    ratingBar.setRating(recipe.getRating());
+                    // Color rating bar.
+                    LayerDrawable stars = (LayerDrawable) ratingBar.getProgressDrawable();
+                    stars.getDrawable(2).setColorFilter(getContext().getResources().getColor(R.color.app_color), PorterDuff.Mode.SRC_ATOP);
+                    stars.getDrawable(1).setColorFilter(getContext().getResources().getColor(R.color.app_color_accent), PorterDuff.Mode.SRC_ATOP);
+                    stars.getDrawable(0).setColorFilter(getContext().getResources().getColor(R.color.app_color_accent), PorterDuff.Mode.SRC_ATOP);
+
+                    // Enable drag & drop re-ordering.
+                    view.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View view) {
+                            // No point in re-ordering 1 recipe (also buggy as it will disappear when dropped).
+                            if (mRecipeList.size() < 2) {
+                                Toast.makeText(getContext(), "There is only one recipe!", Toast.LENGTH_SHORT).show();
+                                return false;
+                            }
+                            ClipData data = ClipData.newPlainText("", "");
+                            // Drag shadow that is displayed during drag.
+                            View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+                            view.startDrag(data, shadowBuilder, view, 0);
+                            // Hide view being dragged.
+                            view.setVisibility(View.INVISIBLE);
+                            // Remember position where it was.
+                            mDragFrom = position;
+                            mViewBeingDragged = view;
+                            // Reset target position.
+                            mDragTo = -1;
+                            // Work-around for many drag events being fired.
+                            mDragStarted = true;
+                            return true;
+                        }
+                    });
+
+                    view.setOnDragListener(new View.OnDragListener() {
+                        @Override
+                        public boolean onDrag(View view, DragEvent dragEvent) {
+                            // Work-around for many drag events being fired.
+                            if (mDragStarted) {
+                                switch (dragEvent.getAction()) {
+                                    case DragEvent.ACTION_DRAG_ENTERED:
+                                        // Remember target position.
+                                        mDragTo = position;
+                                        // Highlight target.
+                                        view.setBackgroundColor(getActivity().getResources().getColor(R.color.app_color));
+                                        view.invalidate();
+                                        return true;
+                                    case DragEvent.ACTION_DRAG_EXITED:
+                                        // Reset target position.
+                                        mDragTo = -1;
+                                        // Reset highlighting.
+                                        view.setBackgroundColor(Color.TRANSPARENT);
+                                        break;
+                                    case DragEvent.ACTION_DRAG_ENDED:
+                                        // Reset all highlighting.
+                                        view.setBackgroundColor(Color.TRANSPARENT);
+                                        // Discard future drag events that were not initiated by the user.
+                                        mDragStarted = false;
+                                        // Valid target?
+                                        if (mDragTo > -1) {
+                                            // Re-order.
+                                            Recipe recipeFrom = mRecipeList.get(mDragFrom);
+                                            mRecipeList.remove(mDragFrom);
+                                            mRecipeList.add(mDragTo, recipeFrom);
+                                            // Make re-ordering persistent.
+                                            long[] recipeIds = new long[mRecipeList.size()];
+                                            int[] positions = new int[mRecipeList.size()];
+                                            for (int i = 0; i < mRecipeList.size(); i++) {
+                                                recipeIds[i] = mRecipeList.get(i).getId();
+                                                mRecipeList.get(i).setListPosition(i);
+                                                positions[i] = i;
+                                            }
+                                            DatabaseHelper.getInstance().orderRecipes(recipeIds, mCategory.getId(), positions);
+                                        }
+                                        // Re-draw list.
+                                        mRecipeListAdapter.notifyDataSetChanged();
+                                        break;
+                                    case DragEvent.ACTION_DRAG_LOCATION:
+                                        // y-coord of touch event inside the touched view (so between 0 and view.getBottom())
+                                        float y = dragEvent.getY();
+                                        // y-coord of top border of the view inside the current viewport.
+                                        int viewTop = view.getTop();
+                                        // y-coord that is still visible of the list view.
+                                        int listBottom = mRecipeListView.getBottom(),
+                                                listTop = mRecipeListView.getTop();
+//                                        Log.i(LOG_TAG, "Y=" + y + " bottom=" + view.getBottom() + " top=" + view.getTop() + " viewY=" + view.getY()
+//                                        + " listbtm=" + mRecipeListView.getBottom());
+
+                                        // actual touch position on screen > bottom with 200px margin
+                                        if (y + viewTop > listBottom - 200) {
+                                            mRecipeListView.smoothScrollBy(100, 25);
+                                            for (int i = 0; i < mRecipeListView.getChildCount(); i++) {
+                                                mRecipeListView.getChildAt(i).setVisibility(View.GONE);
+                                                mRecipeListView.getChildAt(i).setVisibility(View.VISIBLE);
+                                            }
+                                            mViewBeingDragged.setVisibility(View.INVISIBLE);
+                                        } else if (y + viewTop < listTop + 200) {
+                                            mRecipeListView.smoothScrollBy(-100, 25);
+                                            for (int i = 0; i < mRecipeListView.getChildCount(); i++) {
+                                                if (mRecipeListView.getChildAt(i) != mViewBeingDragged) {
+                                                    mRecipeListView.getChildAt(i).setVisibility(View.GONE);
+                                                    mRecipeListView.getChildAt(i).setVisibility(View.VISIBLE);
+                                                }
+                                            }
+                                            mViewBeingDragged.setVisibility(View.INVISIBLE);
+                                        }
+                                        return true;
+                                    default:
+                                        break;
+                                }
+                                return true;
+                            }
+                            return false;
+                        }
+                    });
+                }
+            };
             mRecipeListView.setAdapter(mRecipeListAdapter);
         }
+
+
+
+        /** Keep track of from where to where the user drags recipe cards. */
+        private int mDragFrom, mDragTo;
+        /** To discard drag events not started by the user. */
+        private boolean mDragStarted = false;
+        private View mViewBeingDragged = null;
 
     }
 

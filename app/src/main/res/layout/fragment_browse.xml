@@ -18,9 +18,12 @@
         android:layout_height="wrap_content"
         android:id="@+id/category_recipe_list"
         android:divider="@null"
-        android:dividerHeight="0dp" />
+        android:dividerHeight="0dp"
+        android:layout_alignBottom="@+id/imageButton" />
 
     <ImageButton
         style="@style/FAB.Final"
-        android:onClick="onNewRecipeButton" />
+        android:onClick="onNewRecipeButton"
+        android:id="@+id/imageButton" />
+
 </RelativeLayout>
